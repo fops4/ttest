@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord des Tâches</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Gestionnaire de Tâches</h1>
+    </header>
+    <main>
+        <div id="success-message" style="display: none;"></div>
+
+        <form id="task-form">
+            <h2>Ajouter une tâche</h2>
+            <label for="task-name">Nom de la tâche</label>
+            <input type="text" id="task-name" name="task-name" required>
+            
+            <label for="task-desc">Description</label>
+            <input type="text" id="task-desc" name="task-desc" required>
+            
+            <label for="task-deadline">Date limite</label>
+            <input type="date" id="task-deadline" name="task-deadline" required>
+            
+            <button type="submit">Ajouter la tâche</button>
+        </form>
+        <h2>Liste des tâches</h2>
+        <div id="task-list">
+            
+        </div>
+    </main>
+    <script>
+        // Définir la date minimale 
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('task-deadline').setAttribute('min', today);
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>
