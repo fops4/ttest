@@ -3,16 +3,17 @@ const axios = require('axios');
 const { execSync } = require('child_process');
 
 // Fonction pour récupérer l'utilisateur GitHub
-async function getGithubUser() {
-  try {
-    const gitConfigUser = execSync('git config user.name').toString().trim();
-    const response = await axios.get(`https://api.github.com/users/${gitConfigUser}`);
-    return response.data;
-  } catch (error) {
-    console.error('Erreur lors de la récupération des informations GitHub:', error);
-    return null;
+// Fonction pour récupérer l'adresse e-mail et le nom d'utilisateur de Git localement
+function getGithubUser() {
+    try {
+      const gitConfigUser = execSync('git config user.name').toString().trim();
+      const gitConfigEmail = execSync('git config user.email').toString().trim();
+      return { name: gitConfigUser, email: gitConfigEmail };
+    } catch (error) {
+      console.error('Erreur lors de la récupération des informations Git:', error);
+      return null;
+    }
   }
-}
 
 // Fonction pour envoyer l'e-mail
 async function sendEmail(commitMessage) {
