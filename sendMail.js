@@ -19,7 +19,7 @@ function getCommitInfo() {
 async function getGeminiSuggestions(changes) {
   try {
     const response = await axios.post(
-      'https://api.gemini.example/analyze',
+      'https://ai.google.dev/competition/projects/store-analyzer',
       { changes },
       {
         headers: {
