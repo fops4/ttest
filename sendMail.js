@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+console.log("test");
 
 // Créez un transporteur de votre choix
 let transporter = nodemailer.createTransport({
