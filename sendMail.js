@@ -1,8 +1,9 @@
+require('dotenv').config();  // Charger les variables d’environnement
 const nodemailer = require('nodemailer');
 const { execSync } = require('child_process');
 const axios = require('axios');
 
-// Clé API pour l'API Gemini (assurez-vous de définir GEMINI_API_KEY dans votre environnement)
+// Clé API pour l'API Gemini (récupérée depuis le fichier .env)
 const geminiApiKey = process.env.GEMINI_API_KEY;
 
 // Fonction pour récupérer l'utilisateur et le message de commit
