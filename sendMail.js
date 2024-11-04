@@ -1,38 +1,54 @@
 const nodemailer = require('nodemailer');
-const axios = require('axios');
 const { execSync } = require('child_process');
+const axios = require('axios');
 
-// Fonction pour récupérer l'utilisateur GitHub
-// Fonction pour récupérer l'adresse e-mail et le nom d'utilisateur de Git localement
-function getGithubUser() {
-    try {
-      const gitConfigUser = execSync('git config user.name').toString().trim();
-      const gitConfigEmail = execSync('git config user.email').toString().trim();
-      return { name: gitConfigUser, email: gitConfigEmail };
-    } catch (error) {
-      console.error('Erreur lors de la récupération des informations Git:', error);
-      return null;
-    }
+// Clé API pour l'API Gemini (assurez-vous de définir GEMINI_API_KEY dans votre environnement)
+const geminiApiKey = process.env.GEMINI_API_KEY;
+
+// Fonction pour récupérer l'utilisateur et le message de commit
+function getCommitInfo() {
+  const user = execSync('git config user.name').toString().trim();
+  const email = execSync('git config user.email').toString().trim();
+  const message = execSync('git log -1 --pretty=%B').toString().trim();
+  const changes = execSync('git show -1').toString().trim(); // Affiche les modifications du commit
+  return { user, email, message, changes };
+}
+
+// Fonction pour obtenir les suggestions de Gemini
+async function getGeminiSuggestions(changes) {
+  try {
+    const response = await axios.post(
+      'https://api.gemini.example/analyze',
+      { changes },
+      {
+        headers: {
+          'Authorization': `Bearer ${geminiApiKey}`,  // Inclure la clé API dans l'en-tête
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return response.data.suggestions || 'Aucune suggestion disponible';
+  } catch (error) {
+    console.error('Erreur lors de l\'analyse avec Gemini:', error);
+    return 'Erreur lors de l\'analyse des suggestions.';
   }
+}
 
-// Fonction pour envoyer l'e-mail
-async function sendEmail(commitMessage) {
-  const user = await getGithubUser();
-  if (!user) return;
-
+// Fonction pour envoyer l'e-mail avec les suggestions
+async function sendEmail(commitInfo, suggestions) {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-      user: 'fops415@gmail.com',
-      pass: 'wzrq uhqj iekx irpn'
+        user: 'fops415@gmail.com',
+        pass: 'wzrq uhqj iekx irpn'
     }
   });
 
   const mailOptions = {
     from: '"Notifier de Commit" <fops415@gmail.com>',
-    to: user.email, // Email de l'utilisateur GitHub
-    subject: 'Nouveau Commit effectué',
-    text: `Bonjour ${user.name},\n\nVous avez effectué un nouveau commit :\n\n"${commitMessage}"\n\nMerci !`,
+    to: commitInfo.email,
+    subject: `Suggestions pour votre commit: ${commitInfo.message}`,
+    text: `Bonjour ${commitInfo.user},\n\nVous avez effectué un nouveau commit avec le message:\n"${commitInfo.message}"\n\nSuggestions de Gemini :\n${suggestions}\n\nMerci !`,
   };
 
   try {
@@ -45,8 +61,9 @@ async function sendEmail(commitMessage) {
 
 // Fonction principale
 async function main() {
-  const commitMessage = execSync('git log -1 --pretty=%B').toString().trim();
-  await sendEmail(commitMessage);
+  const commitInfo = getCommitInfo();
+  const suggestions = await getGeminiSuggestions(commitInfo.changes);
+  await sendEmail(commitInfo, suggestions);
 }
 
 main();
