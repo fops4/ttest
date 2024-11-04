@@ -1,38 +1,51 @@
 const nodemailer = require('nodemailer');
-console.log("test");
+const axios = require('axios');
+const { execSync } = require('child_process');
 
-// Créez un transporteur de votre choix
-let transporter = nodemailer.createTransport({
-    service: 'gmail', // Par exemple, utilisez Gmail
-    auth: {
-        user: 'fops415@gmail.com', // Remplacez par votre adresse email
-        pass: 'wzrq uhqj iekx irpn' // Remplacez par votre mot de passe ou un mot de passe d'application
-    }
-});
-
-// Fonction pour envoyer l'email
-function sendEmail(commitMessage) {
-    const mailOptions = {
-        from: 'fops415@gmail.com',
-        to: 'fops3868@gmail.com', // Remplacez par l'adresse du destinataire
-        subject: 'Nouveau Commit',
-        text: `Un nouveau commit a été effectué : ${commitMessage}`
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-            return console.log('Erreur : ' + error);
-        }
-        console.log('Email envoyé : ' + info.response);
-    });
+// Fonction pour récupérer l'utilisateur GitHub
+async function getGithubUser() {
+  try {
+    const gitConfigUser = execSync('git config user.name').toString().trim();
+    const response = await axios.get(`https://api.github.com/users/${gitConfigUser}`);
+    return response.data;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des informations GitHub:', error);
+    return null;
+  }
 }
 
-// Récupérer le message du dernier commit
-const exec = require('child_process').exec;
-exec('git log -1 --pretty=%B', (err, stdout) => {
-    if (err) {
-        console.error(err);
-        return;
+// Fonction pour envoyer l'e-mail
+async function sendEmail(commitMessage) {
+  const user = await getGithubUser();
+  if (!user) return;
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'fops415@gmail.com',
+      pass: 'wzrq uhqj iekx irpn'
     }
-    sendEmail(stdout.trim());
-});
+  });
+
+  const mailOptions = {
+    from: '"Notifier de Commit" <fops415@gmail.com>',
+    to: user.email, // Email de l'utilisateur GitHub
+    subject: 'Nouveau Commit effectué',
+    text: `Bonjour ${user.name},\n\nVous avez effectué un nouveau commit :\n\n"${commitMessage}"\n\nMerci !`,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('E-mail envoyé avec succès');
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi de l\'e-mail:', error);
+  }
+}
+
+// Fonction principale
+async function main() {
+  const commitMessage = execSync('git log -1 --pretty=%B').toString().trim();
+  await sendEmail(commitMessage);
+}
+
+main();
